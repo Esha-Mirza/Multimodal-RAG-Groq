@@ -9,15 +9,11 @@ model = BGEM3FlagModel(
 
 
 def generate_embeddings(texts):
-    """
-    Convert a list of text chunks into numerical vectors.
-    """
 
     results = model.encode(
         texts,
         batch_size=2,
-        max_length=8192
-    )
+        max_length=8192)
 
     embeddings = results["dense_vecs"]
 
