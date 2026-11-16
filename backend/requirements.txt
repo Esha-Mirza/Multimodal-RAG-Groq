@@ -8,3 +8,5 @@ grpcio==1.68.1
 FlagEmbedding
 pyarrow==19.0.1
 xxhash==3.5.0
+python-multipart
+pypdf
