@@ -3,7 +3,7 @@ from app.core.chroma_client import documents_collection
 from app.services.embedding_service import generate_embeddings
 
 
-def search_chunks(query, n_results=3, max_distance=0.75):
+def search_chunks(query, n_results=3):
 
     if not query or not query.strip():
         return []
@@ -24,16 +24,10 @@ def search_chunks(query, n_results=3, max_distance=0.75):
 
     for index in range(len(results["documents"][0])):
 
-        distance = results["distances"][0][index]
-
-        # Ignore results that are too far from the query
-        if distance > max_distance:
-            continue
-
         search_results.append({
             "text": results["documents"][0][index],
             "metadata": results["metadatas"][0][index],
-            "distance": distance
+            "distance": results["distances"][0][index]
         })
 
     return search_results
