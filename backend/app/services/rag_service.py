@@ -5,13 +5,11 @@ from app.services.generation_service import generate_answer
 
 def ask_question(question, n_results=3):
 
-    # Retrieve relevant chunks from ChromaDB
     retrieved_chunks = search_chunks(
         query=question,
         n_results=n_results
     )
 
-    # Handle an empty database
     if not retrieved_chunks:
         return {
             "question": question,
@@ -19,30 +17,36 @@ def ask_question(question, n_results=3):
             "sources": []
         }
 
-    # Prepare context for the Groq model
     context = ""
-
     sources = []
 
     for index, result in enumerate(retrieved_chunks):
+
+        metadata = result["metadata"]
 
         context += f"""
 Source {index + 1}:
 {result["text"]}
 """
 
-        sources.append({
-            "source": result["metadata"]["source"],
-            "chunk_index": result["metadata"]["chunk_index"],
+        source_info = {
+            "source": metadata["source"],
+            "chunk_index": metadata["chunk_index"],
             "text": result["text"]
-        })
+        }
 
-    # Generate an answer using the retrieved context
+        if "page_number" in metadata:
+            source_info["page_number"] = metadata["page_number"]
+
+        sources.append(source_info)
+
     answer = generate_answer(
         question=question,
-        context=context)
+        context=context
+    )
 
     return {
         "question": question,
         "answer": answer,
-        "sources": sources}
+        "sources": sources
+    }
