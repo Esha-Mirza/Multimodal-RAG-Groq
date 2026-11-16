@@ -22,3 +22,6 @@ uploads/
 
 # IDE
 .vscode/
+
+
+backend/data/extracted_images/
