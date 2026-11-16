@@ -1,15 +1,20 @@
 
-def split_text(
-    text,
-    chunk_size=500,
-    overlap=100
-):
-    chunks = []
+def split_text(text, chunk_size=500, overlap=100):
 
-    # Clean unnecessary spaces
-    text = text.replace("\r\n", "\n")
+    if chunk_size <= 0:
+        raise ValueError("chunk_size must be greater than zero.")
+
+    if overlap < 0 or overlap >= chunk_size:
+        raise ValueError("overlap must be between 0 and chunk_size.")
+
+    text = text.replace("\r\n", "\n").strip()
+
+    if not text:
+        return []
+
     paragraphs = text.split("\n\n")
 
+    chunks = []
     current_chunk = ""
 
     for paragraph in paragraphs:
@@ -19,30 +24,42 @@ def split_text(
         if not paragraph:
             continue
 
-        # Add paragraph to the current chunk
-        if len(current_chunk) + len(paragraph) <= chunk_size:
+        # Split paragraphs that are larger than chunk_size
+        if len(paragraph) > chunk_size:
 
             if current_chunk:
-                current_chunk += "\n\n"
+                chunks.append(current_chunk)
+                current_chunk = ""
 
-            current_chunk += paragraph
+            start = 0
+
+            while start < len(paragraph):
+
+                end = start + chunk_size
+                chunk = paragraph[start:end]
+
+                if chunk.strip():
+                    chunks.append(chunk.strip())
+
+                start += chunk_size - overlap
+
+            continue
+
+        # Add paragraph to the current chunk if it fits
+        if not current_chunk:
+            current_chunk = paragraph
+
+        elif len(current_chunk) + 2 + len(paragraph) <= chunk_size:
+
+            current_chunk += "\n\n" + paragraph
 
         else:
+            chunks.append(current_chunk)
 
-            if current_chunk:
-                chunks.append(current_chunk.strip())
+            # Start the next chunk with the new paragraph
+            current_chunk = paragraph
 
-            # Keep some text from the previous chunk
-            if overlap > 0 and current_chunk:
-
-                overlap_text = current_chunk[-overlap:]
-
-                current_chunk = overlap_text + "\n\n" + paragraph
-
-            else:
-                current_chunk = paragraph
-
-    if current_chunk.strip():
-        chunks.append(current_chunk.strip())
+    if current_chunk:
+        chunks.append(current_chunk)
 
     return chunks
