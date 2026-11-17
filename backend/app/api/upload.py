@@ -17,7 +17,7 @@ router = APIRouter(
 
 UPLOAD_DIR = Path(__file__).resolve().parents[2] / "data" / "uploads"
 
-MAX_FILE_SIZE = 5 * 1024 * 1024
+MAX_FILE_SIZE = 25 * 1024 * 1024
 
 
 @router.post("/upload")
