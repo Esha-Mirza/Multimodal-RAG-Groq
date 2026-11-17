@@ -1,4 +1,6 @@
 
+from importlib.metadata import metadata
+
 from app.services.retrieval_service import search_chunks
 from app.services.generation_service import generate_answer
 
@@ -37,6 +39,12 @@ Source {index + 1}:
 
         if "page_number" in metadata:
             source_info["page_number"] = metadata["page_number"]
+
+        if "content_type" in metadata:
+            source_info["content_type"] = metadata["content_type"]
+
+        if "image_number" in metadata:
+            source_info["image_number"] = metadata["image_number"]
 
         sources.append(source_info)
 

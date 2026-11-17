@@ -1,6 +1,7 @@
 
 from pathlib import Path
 from uuid import uuid4
+import traceback
 
 from fastapi import APIRouter, UploadFile, File, HTTPException
 
@@ -110,19 +111,25 @@ async def upload_document(file: UploadFile = File(...)):
             detail=str(error)
         )
 
+    
+    
+    
     except Exception:
+        traceback.print_exc()
+
         if file_path.exists():
             file_path.unlink()
 
         raise HTTPException(
             status_code=500,
-            detail="Document processing failed."
-        )
+            detail="Document processing failed. Check the backend terminal."
+            )
 
     return {
         "message": "Document uploaded and processed successfully.",
         "filename": original_filename,
         "total_pages": result.get("total_pages"),
+        "total_images": result.get("total_images", 0),
         "total_chunks": result["total_chunks"],
         "stored_chunks": result["stored_chunks"]
     }
