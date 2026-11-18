@@ -1,7 +1,6 @@
 
 from app.core.chroma_client import documents_collection
 
-
 # Temporary test sources to remove
 test_sources = [
     "test_document",
