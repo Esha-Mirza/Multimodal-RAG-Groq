@@ -26,7 +26,7 @@ for source in test_sources:
         print(f"No records found for: {source}")
 
 
-# Display remaining records
+# Display remaining record
 print("\nREMAINING DATABASE RECORDS")
 print("--------------------------")
 
