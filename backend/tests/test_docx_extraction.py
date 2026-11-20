@@ -23,30 +23,30 @@ try:
         output_dir=output_dir
     )
 
-    print("\nEXTRACTION RESULTS")
+    print("\nEXTRACTION SUMMARY")
     print("------------------")
 
     print("Text blocks:", result["total_text_blocks"])
     print("Extracted images:", result["total_images"])
     print("Skipped images:", result["skipped_images"])
+    print("Total content blocks:", len(result["content_blocks"]))
 
-    print("\nEXTRACTED TEXT")
+    print("\nDOCUMENT CONTENT IN ORDER")
+    print("-------------------------")
 
-    for index, block in enumerate(result["text"], start=1):
+    for index, block in enumerate(result["content_blocks"], start=1):
 
         print(f"\nBlock {index} ({block['type']}):")
-        print(block["content"][:300])
 
-    print("\nEXTRACTED IMAGE DETAILS")
+        if block["type"] == "image":
 
-    for image in result["images"]:
+            print("Image number:", block["image_number"])
+            print("Dimensions:", block["width"], "x", block["height"])
+            print("Format:", block["format"])
+            print("Path:", block["image_path"])
 
-        print(
-            "Image:", image["image_number"],
-            "| Dimensions:", image["width"], "x", image["height"],
-            "| Format:", image["format"],
-            "| Path:", image["image_path"]
-        )
+        else:
+            print(block["content"][:300])
 
     print("\nDOCX extraction completed.")
 
