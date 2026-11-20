@@ -36,7 +36,7 @@ def ingest_text_document(text, source):
     }
 
 
-def ingest_pdf_document(file_path, source):
+def extract_pdf_content(file_path, source):
 
     pages = extract_pdf_text(file_path)
 
@@ -52,10 +52,33 @@ def ingest_pdf_document(file_path, source):
         output_dir=image_output_dir
     )
 
+    total_pages = len(
+        __import__("pypdf").PdfReader(str(file_path)).pages
+    )
+
+    return {
+        "pages": pages,
+        "images": images,
+        "total_pages": total_pages,
+        "total_text_pages": len(pages),
+        "total_images": len(images)
+    }
+
+
+def ingest_pdf_document(file_path, source):
+
+    extracted_content = extract_pdf_content(
+        file_path=file_path,
+        source=source
+    )
+
+    pages = extracted_content["pages"]
+    images = extracted_content["images"]
+
     all_chunks = []
     chunk_metadata = []
 
-    # Process text extracted from PDF pages
+    # Process extracted PDF text
     for page in pages:
 
         page_chunks = split_text(
@@ -73,8 +96,13 @@ def ingest_pdf_document(file_path, source):
                 "content_type": "text"
             })
 
-    # Process images using Groq Vision
+    # Process extracted images using Groq Vision
     for image in images:
+
+        print(
+            f"Analyzing image {image['image_number']} "
+            f"on page {image['page_number']}..."
+        )
 
         image_description = understand_image(
             image["image_path"]
@@ -107,16 +135,10 @@ def ingest_pdf_document(file_path, source):
         chunk_metadata=chunk_metadata
     )
 
-    total_pages = max(
-        [page["page_number"] for page in pages]
-        + [image["page_number"] for image in images],
-        default=0
-    )
-
     return {
         "source": source,
-        "total_pages": total_pages,
-        "total_images": len(images),
+        "total_pages": extracted_content["total_pages"],
+        "total_images": extracted_content["total_images"],
         "total_chunks": len(all_chunks),
         "stored_chunks": stored_count
     }
