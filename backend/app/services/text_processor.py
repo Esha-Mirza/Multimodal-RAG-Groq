@@ -24,28 +24,61 @@ def split_text(text, chunk_size=500, overlap=100):
         if not paragraph:
             continue
 
-        # Split paragraphs that are larger than chunk_size
         if len(paragraph) > chunk_size:
 
             if current_chunk:
                 chunks.append(current_chunk)
                 current_chunk = ""
 
-            start = 0
+            words = paragraph.split()
+            word_chunks = []
+            current_words = []
+            current_length = 0
 
-            while start < len(paragraph):
+            for word in words:
 
-                end = start + chunk_size
-                chunk = paragraph[start:end]
+                additional_length = len(word)
 
-                if chunk.strip():
-                    chunks.append(chunk.strip())
+                if current_words:
+                    additional_length += 1
 
-                start += chunk_size - overlap
+                if current_length + additional_length > chunk_size:
+
+                    word_chunks.append(" ".join(current_words))
+
+                    overlap_words = []
+                    overlap_length = 0
+
+                    for previous_word in reversed(current_words):
+
+                        required_length = len(previous_word)
+
+                        if overlap_words:
+                            required_length += 1
+
+                        if overlap_length + required_length > overlap:
+                            break
+
+                        overlap_words.insert(0, previous_word)
+                        overlap_length += required_length
+
+                    current_words = overlap_words
+                    current_length = overlap_length
+
+                current_words.append(word)
+
+                if current_length:
+                    current_length += 1
+
+                current_length += len(word)
+
+            if current_words:
+                word_chunks.append(" ".join(current_words))
+
+            chunks.extend(word_chunks)
 
             continue
 
-        # Add paragraph to the current chunk if it fits
         if not current_chunk:
             current_chunk = paragraph
 
@@ -55,8 +88,6 @@ def split_text(text, chunk_size=500, overlap=100):
 
         else:
             chunks.append(current_chunk)
-
-            # Start the next chunk with the new paragraph
             current_chunk = paragraph
 
     if current_chunk:
