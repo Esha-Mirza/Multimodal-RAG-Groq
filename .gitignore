@@ -28,3 +28,5 @@ backend/data/extracted_images/
 
 
 backend/data/test_extracted_images/
+
+backend/data/extracted_docx_images/
