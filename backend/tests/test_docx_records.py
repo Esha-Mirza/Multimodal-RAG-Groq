@@ -2,7 +2,7 @@
 from app.core.chroma_client import documents_collection
 
 
-source = "docx_ingestion_test"
+source = "docx_mixed_test"
 
 print("\nDOCX DATABASE VERIFICATION")
 print("--------------------------")

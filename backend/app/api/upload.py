@@ -7,7 +7,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 
 from app.services.document_service import (
     ingest_text_document,
-    ingest_pdf_document
+    ingest_pdf_document,
+    ingest_docx_document
 )
 
 
@@ -36,10 +37,10 @@ async def upload_document(file: UploadFile = File(...)):
 
     file_extension = Path(original_filename).suffix.lower()
 
-    if file_extension not in [".txt", ".pdf"]:
+    if file_extension not in [".txt", ".pdf", ".docx"]:
         raise HTTPException(
             status_code=400,
-            detail="Only .txt and .pdf files are supported currently."
+            detail="Supported formats are .txt, .pdf, and .docx."
         )
 
     file_content = await file.read(MAX_FILE_SIZE + 1)
@@ -53,7 +54,7 @@ async def upload_document(file: UploadFile = File(...)):
     if len(file_content) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail="File size must not exceed 5 MB."
+            detail="File size must not exceed 25 MB."
         )
 
     unique_filename = f"{uuid4().hex}_{original_filename}"
@@ -90,19 +91,29 @@ async def upload_document(file: UploadFile = File(...)):
                 source=unique_filename
             )
 
-        else:
+        elif file_extension == ".pdf":
 
             result = ingest_pdf_document(
                 file_path=file_path,
                 source=unique_filename
             )
 
+        else:
+
+            result = ingest_docx_document(
+                file_path=file_path,
+                source=unique_filename
+            )
+
     except HTTPException:
+
         if file_path.exists():
             file_path.unlink()
+
         raise
 
     except (ValueError, FileNotFoundError) as error:
+
         if file_path.exists():
             file_path.unlink()
 
@@ -111,10 +122,8 @@ async def upload_document(file: UploadFile = File(...)):
             detail=str(error)
         )
 
-    
-    
-    
     except Exception:
+
         traceback.print_exc()
 
         if file_path.exists():
@@ -123,13 +132,27 @@ async def upload_document(file: UploadFile = File(...)):
         raise HTTPException(
             status_code=500,
             detail="Document processing failed. Check the backend terminal."
-            )
+        )
 
-    return {
+    response = {
         "message": "Document uploaded and processed successfully.",
         "filename": original_filename,
-        "total_pages": result.get("total_pages"),
-        "total_images": result.get("total_images", 0),
         "total_chunks": result["total_chunks"],
         "stored_chunks": result["stored_chunks"]
     }
+
+    if file_extension == ".pdf":
+
+        response["total_pages"] = result["total_pages"]
+        response["total_images"] = result["total_images"]
+
+    elif file_extension == ".docx":
+
+        response["total_text_blocks"] = result["total_text_blocks"]
+        response["total_content_blocks"] = result["total_content_blocks"]
+        response["total_images"] = result["total_images"]
+        response["images_processed"] = result["images_processed"]
+        response["images_skipped"] = result["images_skipped"]
+        response["skipped_images"] = result["skipped_images"]
+
+    return response

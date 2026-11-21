@@ -176,7 +176,8 @@ def extract_docx_document(file_path, source):
     )
 
 
-def ingest_docx_document(file_path, source):
+
+def ingest_docx_document(file_path, source, analyze_images=True):
 
     extracted_content = extract_docx_document(
         file_path=file_path,
@@ -187,6 +188,10 @@ def ingest_docx_document(file_path, source):
 
     all_chunks = []
     chunk_metadata = []
+
+    images_processed = 0
+    images_skipped = 0
+    image_errors = []
 
     for block_index, block in enumerate(content_blocks):
 
@@ -211,35 +216,59 @@ def ingest_docx_document(file_path, source):
 
         elif block["type"] == "image":
 
+            if not analyze_images:
+                images_skipped += 1
+                continue
+
             from app.services.image_understanding_service import understand_image
 
             print(
                 f"Analyzing DOCX image {block['image_number']}..."
             )
 
-            image_description = understand_image(
-                block["image_path"]
-            )
+            try:
 
-            image_chunks = split_text(
-                image_description,
-                chunk_size=500,
-                overlap=100
-            )
+                image_description = understand_image(
+                    block["image_path"]
+                )
 
-            for chunk in image_chunks:
+                if not image_description or not image_description.strip():
+                    raise ValueError("Image analysis returned an empty description.")
 
-                all_chunks.append(chunk)
+                image_chunks = split_text(
+                    image_description,
+                    chunk_size=500,
+                    overlap=100
+                )
 
-                chunk_metadata.append({
-                    "block_index": block_index,
+                for chunk in image_chunks:
+
+                    all_chunks.append(chunk)
+
+                    chunk_metadata.append({
+                        "block_index": block_index,
+                        "image_number": block["image_number"],
+                        "content_type": "image"
+                    })
+
+                images_processed += 1
+
+            except Exception as error:
+
+                images_skipped += 1
+
+                image_errors.append({
                     "image_number": block["image_number"],
-                    "content_type": "image"
+                    "error": str(error)
                 })
+
+                print(
+                    f"Image {block['image_number']} could not be analyzed: {error}"
+                )
 
     if not all_chunks:
         raise ValueError(
-            "No readable text or processable images were found in the DOCX."
+            "No content could be processed. Check the document and image analysis settings."
         )
 
     from app.services.vector_store import store_text_chunks
@@ -256,6 +285,9 @@ def ingest_docx_document(file_path, source):
         "total_images": extracted_content["total_images"],
         "skipped_images": extracted_content["skipped_images"],
         "total_content_blocks": len(content_blocks),
+        "images_processed": images_processed,
+        "images_skipped": images_skipped,
+        "image_errors": image_errors,
         "total_chunks": len(all_chunks),
         "stored_chunks": stored_count
     }
