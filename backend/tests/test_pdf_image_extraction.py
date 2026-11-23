@@ -53,6 +53,6 @@ for page_number, page in enumerate(reader.pages, start=1):
         print("Saved:", image_path)
 
 
-print("\n--------------------")
+print("\n-------------------")
 print("Total extracted images:", total_images)
 print("Output directory:", output_dir.resolve())
