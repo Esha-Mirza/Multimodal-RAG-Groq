@@ -151,6 +151,8 @@ def extract_docx_content(file_path, output_dir):
 
                 if table._element is element:
 
+                    table_rows = []
+
                     for row in table.rows:
 
                         row_text = [
@@ -163,14 +165,17 @@ def extract_docx_content(file_path, output_dir):
                         ]
 
                         if row_text:
+                            table_rows.append(" | ".join(row_text))
 
-                            table_block = {
-                                "type": "table",
-                                "content": " | ".join(row_text)
-                            }
+                    if table_rows:
 
-                            extracted_text.append(table_block)
-                            content_blocks.append(table_block)
+                        table_block = {
+                            "type": "table",
+                            "content": "\n".join(table_rows)
+                        }
+
+                        extracted_text.append(table_block)
+                        content_blocks.append(table_block)
 
                     break
 
