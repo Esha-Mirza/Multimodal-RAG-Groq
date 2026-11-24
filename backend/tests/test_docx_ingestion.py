@@ -4,7 +4,7 @@ from app.services.document_service import ingest_docx_document
 
 docx_path = input("Enter DOCX file path: ").strip().strip('"')
 
-source = "docx_mixed_test"
+source = "docx_image_test"
 
 print("\nDOCX MIXED CONTENT INGESTION TEST")
 print("--------------------------------")
@@ -14,7 +14,7 @@ try:
     result = ingest_docx_document(
         file_path=docx_path,
         source=source,
-        analyze_images=False
+        analyze_images=True
     )
 
     print("\nINGESTION RESULTS")

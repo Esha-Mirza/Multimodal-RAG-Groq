@@ -1,15 +1,14 @@
 
-from importlib.metadata import metadata
-
 from app.services.retrieval_service import search_chunks
 from app.services.generation_service import generate_answer
 
 
-def ask_question(question, n_results=3):
+def ask_question(question, n_results=3, source=None):
 
     retrieved_chunks = search_chunks(
         query=question,
-        n_results=n_results
+        n_results=n_results,
+        source=source
     )
 
     if not retrieved_chunks:
@@ -37,14 +36,17 @@ Source {index + 1}:
             "text": result["text"]
         }
 
-        if "page_number" in metadata:
-            source_info["page_number"] = metadata["page_number"]
+        optional_fields = [
+            "page_number",
+            "content_type",
+            "image_number",
+            "block_index"
+        ]
 
-        if "content_type" in metadata:
-            source_info["content_type"] = metadata["content_type"]
+        for field in optional_fields:
 
-        if "image_number" in metadata:
-            source_info["image_number"] = metadata["image_number"]
+            if field in metadata:
+                source_info[field] = metadata[field]
 
         sources.append(source_info)
 
