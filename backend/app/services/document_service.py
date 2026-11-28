@@ -10,7 +10,7 @@ from app.services.pdf_extractor import (
 from app.services.docx_extractor import extract_docx_content
 
 
-def ingest_text_document(text, source):
+def ingest_text_document(text, source, document_metadata=None):
 
     if not text or not text.strip():
         raise ValueError("The document is empty.")
@@ -28,7 +28,8 @@ def ingest_text_document(text, source):
 
     stored_count = store_text_chunks(
         chunks=chunks,
-        source=source
+        source=source,
+        document_metadata=document_metadata
     )
 
     return {
@@ -73,7 +74,7 @@ def extract_pdf_content(file_path, source):
     }
 
 
-def ingest_pdf_document(file_path, source):
+def ingest_pdf_document(file_path, source, document_metadata=None):
 
     extracted_content = extract_pdf_content(
         file_path=file_path,
@@ -144,7 +145,8 @@ def ingest_pdf_document(file_path, source):
     stored_count = store_text_chunks(
         chunks=all_chunks,
         source=source,
-        chunk_metadata=chunk_metadata
+        chunk_metadata=chunk_metadata,
+        document_metadata=document_metadata
     )
 
     return {
@@ -176,8 +178,13 @@ def extract_docx_document(file_path, source):
     )
 
 
-
-def ingest_docx_document(file_path, source, analyze_images=True):
+def ingest_docx_document(
+    file_path,
+    source,
+    analyze_images=True,
+    document_metadata=None,
+    strict_images=False
+):
 
     extracted_content = extract_docx_document(
         file_path=file_path,
@@ -233,7 +240,9 @@ def ingest_docx_document(file_path, source, analyze_images=True):
                 )
 
                 if not image_description or not image_description.strip():
-                    raise ValueError("Image analysis returned an empty description.")
+                    raise ValueError(
+                        "Image analysis returned an empty description."
+                    )
 
                 image_chunks = split_text(
                     image_description,
@@ -263,12 +272,22 @@ def ingest_docx_document(file_path, source, analyze_images=True):
                 })
 
                 print(
-                    f"Image {block['image_number']} could not be analyzed: {error}"
+                    f"Image {block['image_number']} "
+                    f"could not be analyzed: {error}"
                 )
+
+    if strict_images and (
+        image_errors or extracted_content["skipped_images"] or images_skipped
+    ):
+        raise ValueError(
+            "DOCX image processing was incomplete. "
+            "The document was not stored to protect the previous version."
+        )
 
     if not all_chunks:
         raise ValueError(
-            "No content could be processed. Check the document and image analysis settings."
+            "No content could be processed. "
+            "Check the document and image analysis settings."
         )
 
     from app.services.vector_store import store_text_chunks
@@ -276,7 +295,8 @@ def ingest_docx_document(file_path, source, analyze_images=True):
     stored_count = store_text_chunks(
         chunks=all_chunks,
         source=source,
-        chunk_metadata=chunk_metadata
+        chunk_metadata=chunk_metadata,
+        document_metadata=document_metadata
     )
 
     return {
