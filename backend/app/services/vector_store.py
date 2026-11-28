@@ -3,7 +3,12 @@ from app.core.chroma_client import documents_collection
 from app.services.embedding_service import generate_embeddings
 
 
-def store_text_chunks(chunks, source="manual_test", chunk_metadata=None):
+def store_text_chunks(
+    chunks,
+    source="manual_test",
+    chunk_metadata=None,
+    document_metadata=None
+):
 
     if not chunks:
         return 0
@@ -22,15 +27,13 @@ def store_text_chunks(chunks, source="manual_test", chunk_metadata=None):
             "chunk_index": index
         }
 
+        if document_metadata:
+            metadata.update(document_metadata)
+
         if chunk_metadata:
             metadata.update(chunk_metadata[index])
 
         metadatas.append(metadata)
-
-    # Replace older chunks belonging to this source
-    documents_collection.delete(
-        where={"source": source}
-    )
 
     documents_collection.upsert(
         ids=ids,
